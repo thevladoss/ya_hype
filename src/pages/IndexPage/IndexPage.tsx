@@ -1,14 +1,36 @@
-import { Section, Cell, Image, List } from '@telegram-apps/telegram-ui';
-import type { FC } from 'react';
+import { Section, List } from "@telegram-apps/telegram-ui";
+import type { FC } from "react";
+import { useState, useEffect } from "react";
+import moment from 'moment';
 
-import { Link } from '@/components/Link/Link.tsx';
+// import tonSvg from "./ton.svg";
+import { Timeline } from "@telegram-apps/telegram-ui";
+import { TimelineItem } from "@telegram-apps/telegram-ui/dist/components/Blocks/Timeline/components/TimelineItem/TimelineItem";
 
-import tonSvg from './ton.svg';
+import { db } from "../../components/firebase";
+import { doc, getDoc } from "@firebase/firestore";
 
 export const IndexPage: FC = () => {
+  const [scheduleData, setScheduleData] = useState([])
+
+  useEffect(() => {
+    async function fetchData() {
+      const schedule = (await getDoc(doc(db, "data", "schedule"))).data();
+
+      setScheduleData(
+        schedule!["schedule"].map((doc: { name: any; time: { seconds: any; }; }) => ({
+          name: doc.name,
+          time: moment.unix(doc.time.seconds).format('dddd, hh:ss'),
+        }))
+      );
+      console.log({ scheduleData });
+    }
+    fetchData();
+  }, []);
+
   return (
     <List>
-      <Section
+      {/* <Section
         header='Features'
         footer='You can use these pages to learn more about features, provided by Telegram Mini Apps and other useful projects'
       >
@@ -34,6 +56,14 @@ export const IndexPage: FC = () => {
         <Link to='/theme-params'>
           <Cell subtitle='Telegram application palette information'>Theme Parameters</Cell>
         </Link>
+      </Section> */}
+      <Section header="Расписание" footer="Будьласка будьте внимательны">
+        <Timeline>
+          {scheduleData?.map(({ name, time }) => (
+            <TimelineItem header={name}>{time}</TimelineItem>
+          ))}
+          
+        </Timeline>
       </Section>
     </List>
   );
